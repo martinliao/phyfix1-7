@@ -614,7 +614,7 @@
     <div class="form-group col-xs-6 required <?=form_error('is_assess')?'has-error':'';?>">
         <label class="control-label">考核班期</label>
         <?php
-            echo form_dropdown('is_assess', $choices['is_assess'], set_value('is_assess', $form['is_assess']), "class='form-control' id='is_assess' $user_bureau_status");
+            echo form_dropdown('is_assess', $choices['is_assess'], set_value('is_assess', $form['is_assess']), "class='form-control' id='is_assess' ");
         ?>
         <?=form_error('is_assess'); ?>
     </div>
@@ -730,54 +730,54 @@
             </div>
         </div>
         <div>
-            <!--div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map1" type="checkbox" value="1" name="map1" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map1']=='1'?'checked':''?>>
-                    <span>A營造永續環境</span>
+            <!-- <div class="checkbox-inline" style="margin-left: 0px">
+                <label> -->
+                    <input id="map1" type="hidden" value="1" name="map1" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map1']=='1'?'checked':''?>>
+                    <!-- <span>A營造永續環境</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map2" type="checkbox" value="1" name="map2" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map2']=='1'?'checked':''?>>
-                    <span>B健全都市發展</span>
+                <label> -->
+                    <input id="map2" type="hidden" value="1" name="map2" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map2']=='1'?'checked':''?>>
+                    <!-- <span>B健全都市發展</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map3" type="checkbox" value="1" name="map3" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map3']=='1'?'checked':''?>>
-                    <span>C發展多元文化</span>
+                <label> -->
+                    <input id="map3" type="hidden" value="1" name="map3" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map3']=='1'?'checked':''?>>
+                    <!-- <span>C發展多元文化</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map4" type="checkbox" value="1" name="map4" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map4']=='1'?'checked':''?>>
-                    <span>D優化產業勞動</span>
+                <label> -->
+                    <input id="map4" type="hidden" value="1" name="map4" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map4']=='1'?'checked':''?>>
+                    <!-- <span>D優化產業勞動</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map5" type="checkbox" value="1" name="map5" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map5']=='1'?'checked':''?>>
-                    <span>E強化社會支持</span>
+                <label> -->
+                    <input id="map5" type="hidden" value="1" name="map5" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map5']=='1'?'checked':''?>>
+                    <!-- <span>E強化社會支持</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map6" type="checkbox" value="1" name="map6" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map6']=='1'?'checked':''?>>
-                    <span>F打造優質教育</span>
+                <label> -->
+                    <input id="map6" type="hidden" value="1" name="map6" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map6']=='1'?'checked':''?>>
+                    <!-- <span>F打造優質教育</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map7" type="checkbox" value="1" name="map7" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map7']=='1'?'checked':''?>>
-                    <span>G精進健康安全</span>
+                <label> -->
+                    <input id="map7" type="hidden" value="1" name="map7" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map7']=='1'?'checked':''?>>
+                    <!-- <span>G精進健康安全</span>
                 </label>
             </div>
             <div class="checkbox-inline" style="margin-left: 0px">
-                <label>
-                    <input id="map8" type="checkbox" value="1" name="map8" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map8']=='1'?'checked':''?>>
-                    <span>H精實良善治理</span>
+                <label> -->
+                    <input id="map8" type="hidden" value="1" name="map8" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map8']=='1'?'checked':''?>>
+                    <!-- <span>H精實良善治理</span>
                 </label>
-            </div-->
+            </div> -->
             <div class="checkbox-inline" style="margin-left: 0px">
                 <label>
                     <input id="map9" type="checkbox" value="1" name="map9" style="zoom:1.5;" onclick="chooseOne(this);" <?=$form['map9']=='1'?'checked':''?>>
@@ -1269,7 +1269,8 @@ function checkSave(){
 
         var sd = document.getElementsByName('start_date1')[0].value;
         var ed = document.getElementsByName('end_date1')[0].value;
-        if((sd == '') || (ed == '')){
+        // #4993(#4625) 暫不檢查
+        /*if((sd == '') || (ed == '')){
             alert('上課地點非公訓處時，需填寫開課起迄日');
             return false;
         }
@@ -1277,7 +1278,7 @@ function checkSave(){
         if((parseInt(sd) != year) || (parseInt(ed) != year)){
             alert('預定開課起迄日年度與開班年度不符，請重新點選年度');
             return false;
-        }
+        }/** */
     }
 
     var obj = document.getElementById('data-form');

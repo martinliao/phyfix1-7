@@ -2,6 +2,9 @@
 
 class Createclass extends MY_Controller
 {
+    /** 增加User單位,GroupID,是否為人事 */
+    protected $bureauId, $groupId, $isHR;
+
     public function __construct()
 	{
 		parent::__construct();
@@ -14,8 +17,7 @@ class Createclass extends MY_Controller
         $this->load->model('data/second_category_model');
         $this->load->model('planning/setclass_model');
         $this->load->model('planning/booking_place_model'); //mark 2021-06-03 更新沒有選擇教室的課程
-        $this->load->model('defaultclass/defaultclass_model');
-
+        
         if (!isset($this->data['filter']['page'])) {
             $this->data['filter']['page'] = '1';
         }
@@ -43,6 +45,17 @@ class Createclass extends MY_Controller
             }
             if (!isset($this->data['filter']['query_is_cancel'])) {
                 $this->data['filter']['query_is_cancel'] = '';
+            }
+        }
+        $this->bureauId = $this->flags->user['bureau_id'];
+        $this->groupId = $this->flags->user['group_id'];
+        $this->isHR = false;
+        if (((strcasecmp(ENVIRONMENT, 'production') == 0)
+                && (preg_match("/^211.79.136.20[2,3,4,5,6]$/", $_SERVER["REMOTE_ADDR"]) || preg_match("/^163.29.35.[0-9]*[0-9]*[0-9]*$/", $_SERVER["REMOTE_ADDR"])))
+            || (strcasecmp(ENVIRONMENT, 'production') != 0)
+        ) {
+            if (in_array(14, $this->groupId) ) {
+                $this->isHR = true;
             }
         }
 	}
@@ -153,19 +166,17 @@ class Createclass extends MY_Controller
         $this->data['page_name'] = 'add';
         $this->data['user_bureau'] = $this->flags->user['bureau_id'];
 
-        //if(preg_match("/^211.79.136.20[2,3,4,5,6]$/", $_SERVER["REMOTE_ADDR"]) || preg_match("/^163.29.35.[0-9]*[0-9]*[0-9]*$/", $_SERVER["REMOTE_ADDR"])) {
+        if(preg_match("/^211.79.136.20[2,3,4,5,6]$/", $_SERVER["REMOTE_ADDR"]) || preg_match("/^163.29.35.[0-9]*[0-9]*[0-9]*$/", $_SERVER["REMOTE_ADDR"])) {
             if(in_array(14,$this->flags->user['group_id'])){
                 $this->data['is_edat'] = true;
             } else {
                 $this->data['is_edat'] = false;
             }
-        //}
-
+        }
+        
         $get = $this->input->get();
         if(isset($get['year']) && !empty($get['year']) && isset($get['id']) && !empty($get['id'])){
-            //$this->data['form'] = $this->createclass_model->getFormDefault($this->createclass_model->get($get['id']));
-            $default_values = (array)$this->defaultclass_model->getDefault();
-            $this->data['form'] = $default_values;
+            $this->data['form'] = $this->createclass_model->getFormDefault($this->createclass_model->get($get['id']));
             $this->data['form']['year'] = $get['year'];
             $this->data['form']['room_code'] = '';
             if(isset($this->data['form']['dev_type']) && !empty($this->data['form']['dev_type'])){
@@ -185,39 +196,45 @@ class Createclass extends MY_Controller
             }
 
             $this->data['form']['class_status'] = 1;
+            $this->data['form']['is_assess'] = 0;
+            $this->data['form']['env_class'] = 'N';
+            $this->data['form']['policy_class'] = 'N';
+            $this->data['form']['open_retirement'] = 'N';
+            // #4933(#4625) 3A import 3B, Force clean map(old:1~8)
+            for($i=1; $i<=8; $i++){
+                $key = 'map'.$i;
+                $this->data['form'][$key] = '0';
+            }
 
             $this->data['transfer'] = true;
             $this->data['link_cancel'] = base_url("planning/createclass/");
         } else {
-            //$this->data['form'] = $this->createclass_model->getFormDefault();
-            $default_values = (array)$this->defaultclass_model->getDefault();
-            $this->data['form'] = $default_values;
+            $this->data['form'] = $this->createclass_model->getFormDefault();
 
-            //if(preg_match("/^211.79.136.20[2,3,4,5,6]$/", $_SERVER["REMOTE_ADDR"]) || preg_match("/^163.29.35.[0-9]*[0-9]*[0-9]*$/", $_SERVER["REMOTE_ADDR"])) {
+            if(preg_match("/^211.79.136.20[2,3,4,5,6]$/", $_SERVER["REMOTE_ADDR"]) || preg_match("/^163.29.35.[0-9]*[0-9]*[0-9]*$/", $_SERVER["REMOTE_ADDR"])) {
                 if($this->data['is_edat']){
                     $this->data['beaurau_id'] = $this->createclass_model->getSecondCategory('A');
                 }
-            //}
+            }
 
             $this->data['form']['dev_type'] = $this->flags->user['bureau_id'];
             $this->data['form']['dev_type_name'] = $this->flags->user['bureau_name'];
-            $this->data['form']['beaurau_id']  = $this->flags->user['bureau_id'];
             $this->data['link_cancel'] = base_url("planning/createclass/?{$_SERVER['QUERY_STRING']}");
         }
-        //3A import to 3B
+        
+        // #4933(#4625), 3A import to 3B, 
         if(isset($get['id']) && !empty($get['id'])){
             $this->data['form']['way1'] = 'Y';
         }
         
+        // #4933(#4625) HR's change default-year
         $current_year = date('Y')-1911;
         $next_year = $current_year+1;
         $next_year2 = $current_year+2;
-        
         $this->data['choices']['year'] = array($current_year => $current_year,$next_year => $next_year,$next_year2 => $next_year2);
-        if($this->data['is_edat']){
+        if($this->isHR){
             $this->data['choices']['year'] = array($next_year => $next_year);
         }
-
         $this->data['choices']['type'] = $this->second_category_model->getSeriesCategory();
         $this->data['choices']['type'][''] = '請選擇';
         $this->data['choices']['ht_class_type'] = $this->createclass_model->getHourlyFee();
@@ -243,16 +260,17 @@ class Createclass extends MY_Controller
             $course_name = $this->input->post('course_name');
             $material = $this->input->post('material');
 
+            // #4993(#4625) 暫不檢查
             $fmap_check = false;
-            if($post['fmap'] == 'Y'){
-                for($i=1;$i<=8;$i++){
+            /*if($post['fmap'] == 'Y'){
+                for($i=1; $i<=11; $i++){
                     $key = 'map'.$i;
                     if(isset($post[$key]) && $post[$key] > 0){
                         $fmap_check = true;
                         break;
                     }
                 }
-            }
+            }/** */
 
             if(isset($post['online_course_name']) && !empty($post['online_course_name'])){
                 $online_course_name = $post['online_course_name'];
@@ -266,7 +284,7 @@ class Createclass extends MY_Controller
                 $elrid = $post['elrid'];
             }
 
-            if ($this->_isVerify('add',$this->data['user_bureau'],$fmap_check) == TRUE) {
+            if ($this->_isVerify('add', $this->data['user_bureau'], $fmap_check) == TRUE) {
                 if($post['room_name'] == '非公訓處上課'){
                     $post['room_remark'] = '非公訓處上課';
                     $m = date('m',strtotime($post['start_date1']));
@@ -283,7 +301,7 @@ class Createclass extends MY_Controller
                 }
 
                 if(!isset($post['start_date1'])&&!isset($post['end_date1'])){
-                    $y=$post['year']+1911;
+                    $y=date('Y');
                     $m1='01';
                     $d1='01';
                     $m2='12';
@@ -337,7 +355,6 @@ class Createclass extends MY_Controller
                         for($j=1;$j<=$term_total;$j++){
                             $post['term'] = $j;
                             for($i=0;$i<count($course_name);$i++){
-                                if(!isset($material[$i])){$material[$i] = 4;}
                                 $this->createclass_model->insertCourse($post['year'],$post['class_no'],$post['term'],$course_name[$i],$material[$i]);
                             }
                         }
@@ -383,22 +400,9 @@ class Createclass extends MY_Controller
     {
         $this->data['page_name'] = 'edit';
         $this->data['user_bureau'] = $this->flags->user['bureau_id'];
-        //if(preg_match("/^211.79.136.20[2,3,4,5,6]$/", $_SERVER["REMOTE_ADDR"]) || preg_match("/^163.29.35.[0-9]*[0-9]*[0-9]*$/", $_SERVER["REMOTE_ADDR"])) {
-            if(in_array(14,$this->flags->user['group_id'])){
-                $this->data['is_edat'] = true;
-            } else {
-                $this->data['is_edat'] = false;
-            }
-        //}
 
-        //$this->data['form'] = $this->createclass_model->getFormDefault($this->createclass_model->get($id));
-        $createValues = $this->createclass_model->getFormDefault($this->createclass_model->get($id));
-        $defaultValues = (array)$this->defaultclass_model->getDefault();
-        $this->data['form'] = array_merge($defaultValues, $createValues);
-
-        //$this->data['form']['segmemo'] = $this->createclass_model->getSegmemo($this->data['form']['year'],$this->data['form']['class_no']);
-        $segmemoCreate = $this->createclass_model->getSegmemo($this->data['form']['year'],$this->data['form']['class_no']);
-        $this->data['form']['segmemo'] = !empty($segmemoCreate) ? $segmemoCreate : $defaultValues['segmemo'];
+        $this->data['form'] = $this->createclass_model->getFormDefault($this->createclass_model->get($id));
+        $this->data['form']['segmemo'] = $this->createclass_model->getSegmemo($this->data['form']['year'],$this->data['form']['class_no']);
 
         if(isset($this->data['form']['dev_type']) && !empty($this->data['form']['dev_type'])){
             $this->data['form']['dev_type_name'] = $this->createclass_model->getDevTypeName($this->data['form']['dev_type']);
@@ -458,18 +462,18 @@ class Createclass extends MY_Controller
             $course_name = $this->input->post('course_name');
             $material = $this->input->post('material');
 
+            // #4993(#4625) 暫不檢查
             $fmap_check = false;
-            if($post['fmap'] == 'Y'){
-                for($i=1;$i<=11;$i++){
+            /*if($post['fmap'] == 'Y'){
+                for($i=1; $i<=11; $i++){
                     $key = 'map'.$i;
                     if(isset($post[$key]) && $post[$key] > 0){
                         $fmap_check = true;
                         break;
                     }
                 }
-            }
+            }/**/
 
-            $online_course_name = array();
             if(isset($post['online_course_name']) && !empty($post['online_course_name'])){
                 $online_course_name = $post['online_course_name'];
             }
@@ -482,7 +486,7 @@ class Createclass extends MY_Controller
                 $elrid = $post['elrid'];
             }
 
-            if ($this->_isVerify('edit',$this->data['user_bureau'],$fmap_check) == TRUE) {
+            if ($this->_isVerify('edit', $this->data['user_bureau'], $fmap_check) == TRUE) {
                 if($post['room_name'] == '非公訓處上課'){
                     $post['room_remark'] = '非公訓處上課';
                     $m = date('m',strtotime($post['start_date1']));
@@ -511,7 +515,7 @@ class Createclass extends MY_Controller
                 unset($post['online_course_name']);
                 unset($post['hours']);
                 unset($post['elrid']);
-                
+
                 $rs = $this->createclass_model->updateRequire($id, $post);
                 if ($rs) {
                     if(!empty($segmemo)){
@@ -535,7 +539,6 @@ class Createclass extends MY_Controller
                     if(!empty($course_name) && !empty($material)){
                         $this->createclass_model->deleteCourse($post['year'],$post['class_no'],$post['term']);
                         for($i=0;$i<count($course_name);$i++){
-                            if(!isset($material[$i])){$material[$i] = 4;}
                             $this->createclass_model->insertCourse($post['year'],$post['class_no'],$post['term'],$course_name[$i],$material[$i]);
                         }
                     }
@@ -569,6 +572,7 @@ class Createclass extends MY_Controller
         if($this->data['user_bureau'] != '379680000A'){
             $this->data['link_printApplication'] = base_url("planning/createclass/printApplication/{$id}");
         }
+
         $this->layout->view('planning/createclass/edit', $this->data);
     }
 
@@ -588,12 +592,10 @@ class Createclass extends MY_Controller
             $this->data['form']['ecpa_class_name'] = $this->createclass_model->getEcpaClassName($this->data['form']['ecpa_class_id']);
         }
 
-        /*
-        if(isset($this->data['form']['room_code']) && !empty($this->data['form']['room_code'])){
+        /*if(isset($this->data['form']['room_code']) && !empty($this->data['form']['room_code'])){
             $this->data['form']['room_name'] = $this->createclass_model->getRoomName($this->data['form']['room_code']);
             //var_dump($this->data['form']['room_name']);
-        }
-        */
+        }*/
         $this->data['form']['bookingRooms'] = $this->createclass_model->getBookingRooms($this->data['form']['year'], $this->data['form']['class_no'], $this->data['form']['term']);
 
         if(isset($this->data['form']['room_remark']) && !empty($this->data['form']['room_remark'])){
@@ -968,13 +970,11 @@ class Createclass extends MY_Controller
             $config['open_retirement']['rules'] = '';
         }
 
-        /*
-        if(!$fmap_check){
+        /*if(!$fmap_check){
             $config['fmap']['field'] = 'fmap';
             $config['fmap']['label'] = '府級策略地圖';
             $config['fmap']['rules'] = 'trim|valid_famp';
-        }
-        */
+        }*/
 
         $this->form_validation->set_rules($config);
         $this->form_validation->set_error_delimiters('<p class="text-danger">', '</p>');
